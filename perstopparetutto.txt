@@ -1,0 +1,13 @@
+# Ferma tutto (pipeline + Python child processes)
+kill $(cat logs/pipeline.pid)
+
+# Verifica che sia morto
+ps -p $(cat logs/pipeline.pid)
+
+
+
+
+
+#per fermare tutto l'albero dei processi
+
+kill -- -$(cat logs/pipeline.pid)

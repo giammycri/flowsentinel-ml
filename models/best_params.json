@@ -1,0 +1,342 @@
+{
+  "binary|seed42|RandomForest": {
+    "best_score": 0.999675,
+    "best_params": {
+      "n_estimators": 500,
+      "min_samples_split": 10,
+      "min_samples_leaf": 1,
+      "max_features": 0.4,
+      "max_depth": 20
+    },
+    "tuning_time": 1278.41
+  },
+  "binary|seed42|XGBoost": {
+    "best_score": 0.999747,
+    "best_params": {
+      "subsample": 0.6,
+      "n_estimators": 400,
+      "max_depth": 7,
+      "learning_rate": 0.05,
+      "gamma": 0.5,
+      "colsample_bytree": 0.6
+    },
+    "tuning_time": 76.8
+  },
+  "binary|seed42|DecisionTree": {
+    "best_score": 0.999471,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 20,
+      "min_samples_leaf": 1,
+      "max_depth": 20,
+      "criterion": "entropy"
+    },
+    "tuning_time": 163.16
+  },
+  "binary|seed43|RandomForest": {
+    "best_score": 0.999672,
+    "best_params": {
+      "n_estimators": 500,
+      "min_samples_split": 2,
+      "min_samples_leaf": 2,
+      "max_features": 0.4,
+      "max_depth": 50
+    },
+    "tuning_time": 1151.09
+  },
+  "binary|seed43|XGBoost": {
+    "best_score": 0.99978,
+    "best_params": {
+      "subsample": 0.8,
+      "n_estimators": 200,
+      "max_depth": 7,
+      "learning_rate": 0.1,
+      "gamma": 0.5,
+      "colsample_bytree": 0.6
+    },
+    "tuning_time": 83.49
+  },
+  "binary|seed43|DecisionTree": {
+    "best_score": 0.999371,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 50,
+      "min_samples_leaf": 1,
+      "max_depth": null,
+      "criterion": "entropy"
+    },
+    "tuning_time": 94.27
+  },
+  "binary|seed44|RandomForest": {
+    "best_score": 0.999672,
+    "best_params": {
+      "n_estimators": 100,
+      "min_samples_split": 2,
+      "min_samples_leaf": 2,
+      "max_features": 0.4,
+      "max_depth": 30
+    },
+    "tuning_time": 1206.72
+  },
+  "binary|seed44|XGBoost": {
+    "best_score": 0.999778,
+    "best_params": {
+      "subsample": 1.0,
+      "n_estimators": 100,
+      "max_depth": 9,
+      "learning_rate": 0.3,
+      "gamma": 0,
+      "colsample_bytree": 0.5
+    },
+    "tuning_time": 66.72
+  },
+  "binary|seed44|DecisionTree": {
+    "best_score": 0.999401,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 10,
+      "min_samples_leaf": 4,
+      "max_depth": 30,
+      "criterion": "entropy"
+    },
+    "tuning_time": 131.95
+  },
+  "binary|seed45|RandomForest": {
+    "best_score": 0.999654,
+    "best_params": {
+      "n_estimators": 700,
+      "min_samples_split": 15,
+      "min_samples_leaf": 1,
+      "max_features": 0.6,
+      "max_depth": 50
+    },
+    "tuning_time": 2071.09
+  },
+  "binary|seed45|XGBoost": {
+    "best_score": 0.999764,
+    "best_params": {
+      "subsample": 1.0,
+      "n_estimators": 100,
+      "max_depth": 7,
+      "learning_rate": 0.3,
+      "gamma": 0.1,
+      "colsample_bytree": 0.8
+    },
+    "tuning_time": 65.7
+  },
+  "binary|seed45|DecisionTree": {
+    "best_score": 0.999429,
+    "best_params": {
+      "splitter": "random",
+      "min_samples_split": 5,
+      "min_samples_leaf": 1,
+      "max_depth": 30,
+      "criterion": "entropy"
+    },
+    "tuning_time": 155.05
+  },
+  "binary|seed46|RandomForest": {
+    "best_score": 0.999656,
+    "best_params": {
+      "n_estimators": 100,
+      "min_samples_split": 10,
+      "min_samples_leaf": 1,
+      "max_features": 0.4,
+      "max_depth": 50
+    },
+    "tuning_time": 1422.19
+  },
+  "binary|seed46|XGBoost": {
+    "best_score": 0.999752,
+    "best_params": {
+      "subsample": 0.6,
+      "n_estimators": 100,
+      "max_depth": 9,
+      "learning_rate": 0.3,
+      "gamma": 0.5,
+      "colsample_bytree": 0.5
+    },
+    "tuning_time": 70.52
+  },
+  "binary|seed46|DecisionTree": {
+    "best_score": 0.999462,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 5,
+      "min_samples_leaf": 8,
+      "max_depth": null,
+      "criterion": "entropy"
+    },
+    "tuning_time": 141.53
+  },
+  "multiclass|seed42|RandomForest": {
+    "best_score": 0.999433,
+    "best_params": {
+      "n_estimators": 500,
+      "min_samples_split": 10,
+      "min_samples_leaf": 1,
+      "max_features": 0.4,
+      "max_depth": 20
+    },
+    "tuning_time": 1300.02
+  },
+  "multiclass|seed42|XGBoost": {
+    "best_score": 0.999588,
+    "best_params": {
+      "subsample": 0.5,
+      "n_estimators": 400,
+      "max_depth": 3,
+      "learning_rate": 0.2,
+      "gamma": 0.5,
+      "colsample_bytree": 0.6
+    },
+    "tuning_time": 341.52
+  },
+  "multiclass|seed42|DecisionTree": {
+    "best_score": 0.999133,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 20,
+      "min_samples_leaf": 1,
+      "max_depth": 20,
+      "criterion": "entropy"
+    },
+    "tuning_time": 166.15
+  },
+  "multiclass|seed43|RandomForest": {
+    "best_score": 0.999443,
+    "best_params": {
+      "n_estimators": 500,
+      "min_samples_split": 2,
+      "min_samples_leaf": 2,
+      "max_features": 0.4,
+      "max_depth": 50
+    },
+    "tuning_time": 1197.99
+  },
+  "multiclass|seed43|XGBoost": {
+    "best_score": 0.999651,
+    "best_params": {
+      "subsample": 0.8,
+      "n_estimators": 400,
+      "max_depth": 3,
+      "learning_rate": 0.1,
+      "gamma": 0,
+      "colsample_bytree": 0.6
+    },
+    "tuning_time": 363.0
+  },
+  "multiclass|seed43|DecisionTree": {
+    "best_score": 0.999118,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 50,
+      "min_samples_leaf": 1,
+      "max_depth": null,
+      "criterion": "entropy"
+    },
+    "tuning_time": 96.99
+  },
+  "multiclass|seed44|RandomForest": {
+    "best_score": 0.999483,
+    "best_params": {
+      "n_estimators": 100,
+      "min_samples_split": 2,
+      "min_samples_leaf": 2,
+      "max_features": 0.4,
+      "max_depth": 30
+    },
+    "tuning_time": 1279.8
+  },
+  "multiclass|seed44|XGBoost": {
+    "best_score": 0.999637,
+    "best_params": {
+      "subsample": 1.0,
+      "n_estimators": 400,
+      "max_depth": 3,
+      "learning_rate": 0.1,
+      "gamma": 0.1,
+      "colsample_bytree": 1.0
+    },
+    "tuning_time": 285.52
+  },
+  "multiclass|seed44|DecisionTree": {
+    "best_score": 0.999171,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 10,
+      "min_samples_leaf": 4,
+      "max_depth": 30,
+      "criterion": "entropy"
+    },
+    "tuning_time": 139.82
+  },
+  "multiclass|seed45|RandomForest": {
+    "best_score": 0.999501,
+    "best_params": {
+      "n_estimators": 700,
+      "min_samples_split": 15,
+      "min_samples_leaf": 1,
+      "max_features": 0.6,
+      "max_depth": 50
+    },
+    "tuning_time": 2143.94
+  },
+  "multiclass|seed45|XGBoost": {
+    "best_score": 0.99963,
+    "best_params": {
+      "subsample": 0.9,
+      "n_estimators": 300,
+      "max_depth": 5,
+      "learning_rate": 0.05,
+      "gamma": 0,
+      "colsample_bytree": 0.5
+    },
+    "tuning_time": 282.59
+  },
+  "multiclass|seed45|DecisionTree": {
+    "best_score": 0.99913,
+    "best_params": {
+      "splitter": "random",
+      "min_samples_split": 5,
+      "min_samples_leaf": 1,
+      "max_depth": 30,
+      "criterion": "entropy"
+    },
+    "tuning_time": 159.39
+  },
+  "multiclass|seed46|RandomForest": {
+    "best_score": 0.999471,
+    "best_params": {
+      "n_estimators": 700,
+      "min_samples_split": 20,
+      "min_samples_leaf": 1,
+      "max_features": 0.6,
+      "max_depth": 50
+    },
+    "tuning_time": 1624.26
+  },
+  "multiclass|seed46|XGBoost": {
+    "best_score": 0.99959,
+    "best_params": {
+      "subsample": 0.6,
+      "n_estimators": 300,
+      "max_depth": 7,
+      "learning_rate": 0.2,
+      "gamma": 0.5,
+      "colsample_bytree": 0.6
+    },
+    "tuning_time": 303.84
+  },
+  "multiclass|seed46|DecisionTree": {
+    "best_score": 0.999128,
+    "best_params": {
+      "splitter": "best",
+      "min_samples_split": 5,
+      "min_samples_leaf": 8,
+      "max_depth": null,
+      "criterion": "entropy"
+    },
+    "tuning_time": 152.68
+  }
+}

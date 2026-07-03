@@ -1,0 +1,6 @@
+# Raw dataset (too large for GitHub, 100MB+ single file limit)
+Wednesday-workingHours.pcap_ISCX.csv
+
+# Python
+__pycache__/
+*.pyc
