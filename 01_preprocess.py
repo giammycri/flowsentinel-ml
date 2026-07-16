@@ -17,7 +17,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 
-from config import CONFIG
+from config import CONFIG, COLUMN_MAP, DROP_COLUMNS, DROP_LABEL_PREFIX
 
 IS_TTY = sys.stdout.isatty()   # False when output is redirected to a log file
 
@@ -48,6 +48,54 @@ def load_csv(path: str) -> pd.DataFrame:
         pb.update(1)
     elapsed = time.perf_counter() - t0
     log(f"  Shape: {df.shape}  ({elapsed:.1f}s)")
+    return df
+
+
+def harmonize(df: pd.DataFrame) -> pd.DataFrame:
+    """Bring the re-extracted flows onto the original CICIDS2017 schema.
+
+    The fixed CICFlowMeter of Engelen et al. emits V4 naming, flow identifiers,
+    and features the original extractor never had. Renaming to the original
+    naming and dropping the extras keeps the feature space identical to the
+    first experiment, so result differences trace back to the flow extraction
+    fix rather than to a different feature set.
+    """
+    separator("STEP 1b — Harmonizing schema to CICIDS2017")
+
+    df.columns = df.columns.str.strip()
+
+    df = df.rename(columns=COLUMN_MAP)
+    log(f"  Renamed {len(COLUMN_MAP)} column(s) to CICIDS2017 naming")
+
+    present = [c for c in DROP_COLUMNS if c in df.columns]
+    df = df.drop(columns=present)
+    log(f"  Dropped {len(present)} identifier/V4-only column(s)  (remaining: {df.shape[1]})")
+
+    # Heartbleed first: dropping the rows before the Attempted→BENIGN merge
+    # below, otherwise "Heartbleed - Attempted" would survive as BENIGN.
+    is_hb = df["Label"].str.startswith(DROP_LABEL_PREFIX)
+    log(f"  Dropped {int(is_hb.sum())} {DROP_LABEL_PREFIX} row(s): too few to learn from")
+    df = df[~is_hb]
+
+    # Engelen et al. mark attack flows that carried no forward payload as
+    # "X - Attempted" and relabel them BENIGN in their own experiments.
+    is_att = df["Label"].str.endswith(" - Attempted")
+    log(f"  Relabelled {int(is_att.sum())} '- Attempted' row(s) as BENIGN (Engelen et al.)")
+    df.loc[is_att, "Label"] = "BENIGN"
+
+    # Fail loudly here rather than on the float32 cast in clean(), which would
+    # only report an opaque conversion error.
+    leftover = [c for c in df.columns
+                if c != "Label" and not pd.api.types.is_numeric_dtype(df[c])]
+    if leftover:
+        log(f"\n  ERROR: {len(leftover)} non-numeric column(s) survived harmonization:")
+        for c in leftover:
+            log(f"    - {c}")
+        log("\n  Add them to COLUMN_MAP or DROP_COLUMNS in config.py.")
+        sys.exit(1)
+
+    df = df.reset_index(drop=True)
+    log(f"  Rows remaining: {len(df):,}")
     return df
 
 
@@ -195,6 +243,7 @@ def main():
         return
 
     df         = load_csv(CONFIG["csv_path"])
+    df         = harmonize(df)
     df, y_raw  = clean(df)
     df         = correlation_filter(df, CONFIG["corr_threshold"])
 

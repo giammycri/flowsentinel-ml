@@ -1,5 +1,11 @@
-# Raw dataset (too large for GitHub, 100MB+ single file limit)
+# Raw datasets (too large for GitHub, 100MB+ single file limit)
 Wednesday-workingHours.pcap_ISCX.csv
+CICids2017new.csv
+
+# Labelling stage: upstream clone + its in/out dirs (regenerate with 00_label.py)
+third_party/
+unlabelled/
+labelled/
 
 # Python
 __pycache__/
