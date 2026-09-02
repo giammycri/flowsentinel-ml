@@ -7,15 +7,10 @@ import os
 
 CONFIG = {
     # ---------- Dataset ----------
-    # Wednesday flows re-extracted with the fixed CICFlowMeter of Engelen et al.
-    # (WTMC2021) and labelled by 00_label.py. Run that stage first: the raw
-    # CICids2017new.csv ships with every Label set to "NeedManualLabel".
-    "csv_path":       "labelled/Wednesday-WorkingHours.pcap_REVI.csv",
+    "csv_path":       "flussotest/dataset_finale.csv",
 
     # ---------- Experiment ----------
-    "seeds":          [42, 43, 44, 45, 46],
     "test_size":      0.30,
-    "n_iter":         20,       # RandomizedSearchCV candidates per model
     "corr_threshold": 0.95,     # drop one of each pair with |r| > this
 
     # ---------- Directories ----------
@@ -23,6 +18,63 @@ CONFIG = {
     "models_dir":     "models",       # fitted .pkl models saved here
     "output_dir":     "output",       # plots and CSV results saved here
     "logs_dir":       "logs",         # log files saved here
+}
+
+# ---------------------------------------------------------------------------
+# Fixed hyperparameters (no more RandomizedSearchCV / cross-validation).
+# Reused from the best result of the previous tuning run (models/best_params.json,
+# seed 42) for each task, so training is a single direct fit per model.
+# ---------------------------------------------------------------------------
+
+FIXED_HYPERPARAMS = {
+    "binary": {
+        "RandomForest": {
+            "n_estimators":      100,
+            "max_depth":         30,
+            "min_samples_split": 10,
+            "min_samples_leaf":  1,
+            "max_features":      0.2,
+        },
+        "XGBoost": {
+            "n_estimators":     300,
+            "max_depth":        12,
+            "learning_rate":    0.05,
+            "subsample":        0.5,
+            "colsample_bytree": 0.5,
+            "gamma":            0.05,
+        },
+        "DecisionTree": {
+            "max_depth":         30,
+            "min_samples_split": 2,
+            "min_samples_leaf":  1,
+            "criterion":         "entropy",
+            "splitter":          "best",
+        },
+    },
+    "multiclass": {
+        "RandomForest": {
+            "n_estimators":      100,
+            "max_depth":         None,
+            "min_samples_split": 5,
+            "min_samples_leaf":  1,
+            "max_features":      "log2",
+        },
+        "XGBoost": {
+            "n_estimators":     400,
+            "max_depth":        3,
+            "learning_rate":    0.05,
+            "subsample":        1.0,
+            "colsample_bytree": 0.5,
+            "gamma":            0.05,
+        },
+        "DecisionTree": {
+            "max_depth":         30,
+            "min_samples_split": 2,
+            "min_samples_leaf":  1,
+            "criterion":         "entropy",
+            "splitter":          "best",
+        },
+    },
 }
 
 # ---------------------------------------------------------------------------

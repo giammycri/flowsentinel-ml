@@ -1,11 +1,10 @@
 """
-02_tune.py — Hyperparameter tuning and model fitting for all experiments.
+02_tune.py — Model fitting with fixed hyperparameters (no search, no CV, no seed).
 
-Loads preprocessed data from data_cache/, runs RandomizedSearchCV for every
-(task, seed, model) combination, and saves the fitted models to models/.
-
-RESUME SUPPORT: if a model file already exists it is skipped automatically.
-Re-run the script after a crash and it picks up where it left off.
+Loads preprocessed data from data_cache/, fits every (task, model) combination
+once with the fixed hyperparameters from config.py, and saves the fitted
+models to models/, overwriting any existing ones — every run retrains from
+scratch on the current dataset.
 
 Usage:
     python3 -u 02_tune.py
@@ -15,7 +14,6 @@ import os
 import sys
 import time
 import json
-import random
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -23,12 +21,12 @@ import numpy as np
 import joblib
 from tqdm import tqdm
 
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from config import CONFIG
+from config import CONFIG, FIXED_HYPERPARAMS
 
 IS_TTY = sys.stdout.isatty()
 
@@ -48,8 +46,8 @@ def separator(title: str = "") -> None:
         log(line)
 
 
-def model_path(task: str, seed: int, model_name: str) -> str:
-    fname = f"{task}_seed{seed}_{model_name}.pkl"
+def model_path(task: str, model_name: str) -> str:
+    fname = f"{task}_{model_name}.pkl"
     return os.path.join(CONFIG["models_dir"], fname)
 
 
@@ -57,7 +55,7 @@ def params_path() -> str:
     return os.path.join(CONFIG["models_dir"], "best_params.json")
 
 
-def load_best_params() -> dict:
+def load_used_params() -> dict:
     p = params_path()
     if os.path.exists(p):
         with open(p) as f:
@@ -65,136 +63,98 @@ def load_best_params() -> dict:
     return {}
 
 
-def save_best_params(all_params: dict) -> None:
+def save_used_params(all_params: dict) -> None:
     with open(params_path(), "w") as f:
         json.dump(all_params, f, indent=2)
 
 # ---------------------------------------------------------------------------
-# Model / hyperparameter definitions
+# Model definitions — fixed hyperparameters, no random_state
 # ---------------------------------------------------------------------------
 
-def _make_xgboost(seed: int) -> XGBClassifier:
-    kwargs = dict(random_state=seed, eval_metric="logloss",
-                  verbosity=0, device="cuda")
-    try:
-        return XGBClassifier(**kwargs, use_label_encoder=False)
-    except TypeError:
-        return XGBClassifier(**kwargs)
-
-
-def get_model_param_spaces(seed: int) -> dict:
+def get_models(task: str) -> dict:
+    params = FIXED_HYPERPARAMS[task]
     return {
-        "RandomForest": (
-            RandomForestClassifier(random_state=seed, n_jobs=-1),
-            {
-                "n_estimators":      [100, 200, 300, 500, 700],
-                "max_depth":         [None, 10, 20, 30, 50],
-                "min_samples_split": [2, 5, 10, 15, 20],
-                "min_samples_leaf":  [1, 2, 4, 8, 16],
-                "max_features":      ["sqrt", "log2", 0.2, 0.4, 0.6],
-            },
+        "RandomForest": RandomForestClassifier(
+            n_jobs=-1, **params["RandomForest"],
         ),
-        "XGBoost": (
-            _make_xgboost(seed),
-            {
-                "n_estimators":     [100, 200, 300, 400, 500],
-                "max_depth":        [3, 5, 7, 9, 12],
-                "learning_rate":    [0.01, 0.05, 0.1, 0.2, 0.3],
-                "subsample":        [0.5, 0.6, 0.8, 0.9, 1.0],
-                "colsample_bytree": [0.5, 0.6, 0.8, 0.9, 1.0],
-                "gamma":            [0, 0.05, 0.1, 0.5, 1.0],
-            },
+        "XGBoost": XGBClassifier(
+            eval_metric="logloss", verbosity=0, device="cuda",
+            **params["XGBoost"],
         ),
-        "DecisionTree": (
-            DecisionTreeClassifier(random_state=seed),
-            {
-                "max_depth":         [None, 5, 10, 20, 30],
-                "min_samples_split": [2, 5, 10, 20, 50],
-                "min_samples_leaf":  [1, 2, 4, 8, 16],
-                "criterion":         ["gini", "entropy"],
-                "splitter":          ["best", "random"],
-            },
+        "DecisionTree": DecisionTreeClassifier(
+            **params["DecisionTree"],
         ),
     }
 
 # ---------------------------------------------------------------------------
-# Tuning
+# Training
 # ---------------------------------------------------------------------------
 
-def tune_and_save(
+def fit_and_save(
     task: str,
-    seed: int,
     model_name: str,
     estimator,
-    param_dist: dict,
     X_train: np.ndarray,
     y_train: np.ndarray,
     all_params: dict,
 ) -> None:
-    """Tune one model, refit on full training set, save to disk."""
-    out_path = model_path(task, seed, model_name)
-
-    # Resume: skip if already done
-    if os.path.exists(out_path):
-        log(f"      SKIP — already exists: {out_path}")
-        return
+    """Fit one model with its fixed hyperparameters and save to disk."""
+    out_path = model_path(task, model_name)
 
     is_gpu = isinstance(estimator, XGBClassifier)
     device_tag = "[GPU]" if is_gpu else "[CPU]"
-    n_fits = CONFIG["n_iter"] * 3
     log(f"\n    ┌─ {model_name} {device_tag}")
-    log(f"    │  Fitting {CONFIG['n_iter']} candidates × 3 folds = {n_fits} fits …")
-
-    # n_jobs=1 in the search so all output goes through the main process
-    # stdout — this is what makes verbose=2 appear in the log file.
-    # The estimator itself still uses n_jobs=-1 (RF) or device=cuda (XGBoost)
-    # so each individual fit is still parallelised internally.
-    search = RandomizedSearchCV(
-        estimator=estimator,
-        param_distributions=param_dist,
-        n_iter=CONFIG["n_iter"],
-        cv=3,
-        scoring="f1_weighted",
-        n_jobs=1,
-        random_state=seed,
-        refit=True,
-        verbose=2,          # each fold printed with timing — visible because n_jobs=1
-    )
+    log(f"    │  Fitting with fixed hyperparameters …")
 
     t0 = time.perf_counter()
-    search.fit(X_train, y_train)
+    estimator.fit(X_train, y_train)
     elapsed = time.perf_counter() - t0
 
-    best_params = search.best_params_
-    best_score  = search.best_score_
+    log(f"    │  Total fit time      : {elapsed:.1f}s")
 
-    log(f"    │  Best CV F1-weighted : {best_score:.6f}")
-    log(f"    │  Best params         : {best_params}")
-    log(f"    │  Total tuning time   : {elapsed:.1f}s")
-
-    # Save fitted model
-    joblib.dump(search.best_estimator_, out_path)
+    joblib.dump(estimator, out_path)
     log(f"    └─ Saved: {out_path}")
 
-    # Record params
-    key = f"{task}|seed{seed}|{model_name}"
+    key = f"{task}|{model_name}"
     all_params[key] = {
-        "best_score":  round(best_score, 6),
-        "best_params": best_params,
-        "tuning_time": round(elapsed, 2),
+        "used_params": FIXED_HYPERPARAMS[task][model_name],
+        "fit_time":    round(elapsed, 2),
     }
-    save_best_params(all_params)   # write after each model so nothing is lost
+    save_used_params(all_params)   # write after each model so nothing is lost
 
 
-def get_split(X, y, seed):
-    """Stratified train/test split with fallback for rare classes (Heartbleed)."""
+def split_indices_path(task: str) -> str:
+    return os.path.join(CONFIG["data_cache_dir"], f"{task}_split_indices.npz")
+
+
+def get_split(X, y, task: str):
+    """Stratified train/test split with fallback for rare classes.
+
+    No seed is used, so the split is saved to disk on first run and reused
+    on every subsequent run (incl. by 03_evaluate.py) — otherwise a fresh
+    unseeded split would silently leak test rows into the training set.
+    """
+    idx_path = split_indices_path(task)
+    n = len(X)
+
+    if os.path.exists(idx_path):
+        log(f"    Reusing saved split: {idx_path}")
+        npz = np.load(idx_path)
+        train_idx, test_idx = npz["train_idx"], npz["test_idx"]
+        return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
+
+    all_idx = np.arange(n)
     try:
-        return train_test_split(X, y, test_size=CONFIG["test_size"],
-                                random_state=seed, stratify=y)
+        train_idx, test_idx = train_test_split(
+            all_idx, test_size=CONFIG["test_size"], stratify=y)
     except ValueError as e:
         log(f"    WARNING: stratified split failed ({e}); falling back to random split")
-        return train_test_split(X, y, test_size=CONFIG["test_size"],
-                                random_state=seed, stratify=None)
+        train_idx, test_idx = train_test_split(
+            all_idx, test_size=CONFIG["test_size"], stratify=None)
+
+    np.savez(idx_path, train_idx=train_idx, test_idx=test_idx)
+    log(f"    Saved split: {idx_path}")
+    return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
 
 # ---------------------------------------------------------------------------
 # Main
@@ -202,7 +162,7 @@ def get_split(X, y, seed):
 
 def main():
     t_start = time.perf_counter()
-    separator("CICIDS2017 — TUNING SCRIPT")
+    separator("TRAINING SCRIPT — fixed hyperparameters, no CV, no seed")
     log(f"  Started: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
     # --- Load preprocessed data ---
@@ -219,58 +179,39 @@ def main():
 
     TASKS = {"binary": y_binary, "multiclass": y_multiclass}
 
-    all_params = load_best_params()   # load existing params for resume
+    all_params = load_used_params()   # load existing params for resume
 
-    # Count total experiments for overall progress
-    total_exps = len(TASKS) * len(CONFIG["seeds"]) * 3   # 3 models
+    total_exps = len(TASKS) * 3   # 3 models
     done = 0
 
     for task, y in TASKS.items():
         separator(f"TASK: {task.upper()}")
 
-        task_bar = tqdm(CONFIG["seeds"], desc=f"  Seeds [{task}]",
-                        unit="seed", disable=not IS_TTY,
-                        position=0, leave=True, dynamic_ncols=True)
+        X_train, X_test, y_train, y_test = get_split(X, y, task)
+        log(f"  Train: {X_train.shape[0]:,} samples  |  Test: {X_test.shape[0]:,} samples")
 
-        for seed in task_bar:
-            task_bar.set_description(f"  Seed {seed} [{task}]")
-            log(f"\n  {'─'*56}")
-            log(f"  Seed {seed}  |  task={task}")
-            log(f"  {'─'*56}")
+        models = get_models(task)
 
-            random.seed(seed)
-            np.random.seed(seed)
+        model_bar = tqdm(
+            models.items(),
+            desc="    Models", unit="model",
+            disable=not IS_TTY, position=0, leave=False,
+            total=len(models), dynamic_ncols=True,
+        )
 
-            X_train, X_test, y_train, y_test = get_split(X, y, seed)
-            log(f"  Train: {X_train.shape[0]:,} samples  |  Test: {X_test.shape[0]:,} samples")
+        for model_name, estimator in model_bar:
+            model_bar.set_description(f"    {model_name}")
+            done += 1
+            log(f"\n  [{done}/{total_exps}] task={task}  model={model_name}")
 
-            model_spaces = get_model_param_spaces(seed)
+            fit_and_save(task, model_name, estimator, X_train, y_train, all_params)
 
-            model_bar = tqdm(
-                model_spaces.items(),
-                desc="    Models", unit="model",
-                disable=not IS_TTY, position=1, leave=False,
-                total=len(model_spaces), dynamic_ncols=True,
-            )
-
-            for model_name, (estimator, param_dist) in model_bar:
-                model_bar.set_description(f"    {model_name}")
-                done += 1
-                log(f"\n  [{done}/{total_exps}] task={task}  seed={seed}  model={model_name}")
-
-                tune_and_save(
-                    task, seed, model_name,
-                    estimator, param_dist,
-                    X_train, y_train,
-                    all_params,
-                )
-
-            model_bar.close()
+        model_bar.close()
 
     elapsed = time.perf_counter() - t_start
-    separator("TUNING COMPLETE")
+    separator("TRAINING COMPLETE")
     log(f"  Models saved to : {os.path.abspath(CONFIG['models_dir'])}/")
-    log(f"  Best params JSON: {os.path.abspath(params_path())}")
+    log(f"  Used params JSON: {os.path.abspath(params_path())}")
     log(f"  Total time      : {elapsed/60:.1f} min  ({elapsed:.0f}s)")
     log(f"  Finished        : {time.strftime('%Y-%m-%d %H:%M:%S')}")
     log("")

@@ -10,3 +10,9 @@ labelled/
 # Python
 __pycache__/
 *.pyc
+
+flussotest/
+
+.venv/
+.claude/
+

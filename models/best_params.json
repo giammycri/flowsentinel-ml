@@ -338,5 +338,67 @@
       "criterion": "gini"
     },
     "tuning_time": 163.22
+  },
+  "binary|RandomForest": {
+    "used_params": {
+      "n_estimators": 100,
+      "max_depth": 30,
+      "min_samples_split": 10,
+      "min_samples_leaf": 1,
+      "max_features": 0.2
+    },
+    "fit_time": 0.7
+  },
+  "binary|XGBoost": {
+    "used_params": {
+      "n_estimators": 300,
+      "max_depth": 12,
+      "learning_rate": 0.05,
+      "subsample": 0.5,
+      "colsample_bytree": 0.5,
+      "gamma": 0.05
+    },
+    "fit_time": 1.05
+  },
+  "binary|DecisionTree": {
+    "used_params": {
+      "max_depth": 30,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "criterion": "entropy",
+      "splitter": "best"
+    },
+    "fit_time": 0.45
+  },
+  "multiclass|RandomForest": {
+    "used_params": {
+      "n_estimators": 100,
+      "max_depth": null,
+      "min_samples_split": 5,
+      "min_samples_leaf": 1,
+      "max_features": "log2"
+    },
+    "fit_time": 0.62
+  },
+  "multiclass|XGBoost": {
+    "used_params": {
+      "n_estimators": 400,
+      "max_depth": 3,
+      "learning_rate": 0.05,
+      "subsample": 1.0,
+      "colsample_bytree": 0.5,
+      "gamma": 0.05
+    },
+    "fit_time": 1.56
+  },
+  "multiclass|DecisionTree": {
+    "used_params": {
+      "max_depth": 30,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "criterion": "entropy",
+      "splitter": "best"
+    },
+    "fit_time": 0.99
   }
 }
